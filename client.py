@@ -144,9 +144,8 @@ class WebRTCClient:
         if self.state != 'publish':
             return
         assert (self.webrtc)
-        msg = json.loads(message)
-        if msg['message'] == 'setRemoteSDP':
-            sdp = msg['data'][1]
+        if message['message'] == 'setRemoteSDP':
+            sdp = message['data'][1]
             res, sdpmsg = GstSdp.SDPMessage.new()
             GstSdp.sdp_message_parse_buffer(bytes(sdp.encode()), sdpmsg)
             # Flashphoner returns a sdp that doesn't have the "setup" attribute
@@ -172,6 +171,16 @@ class WebRTCClient:
         self.state = 'publish'
         self.start_pipeline()
 
+    def notify_stream(self, message):
+        data = message['data'][0]
+        if data["status"] == "PUBLISHING":
+            self.state == "streaming"
+        elif data["status"] == "FAILED":
+            self.state = "connected"
+        elif data["status"] == "UNPUBLISHED":
+            sys.exit(0)
+        pass
+
     async def loop(self):
         assert self.conn
         async for message in self.conn:
@@ -185,7 +194,9 @@ class WebRTCClient:
                 await self.pong()
                 self.publish()
             elif jsonmsg['message'] == 'setRemoteSDP':
-                await self.handle_sdp(message)
+                await self.handle_sdp(jsonmsg)
+            elif jsonmsg['message'] == 'notifyStreamStatusEvent':
+                self.notify_stream(jsonmsg)
         return 0
 
 
