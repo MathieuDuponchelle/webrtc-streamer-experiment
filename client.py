@@ -75,7 +75,7 @@ class WebRTCClient:
                                 [
                                     {
                                         'mediaSessionId': str(self.media_session_id),
-                                        'name':'gst-demo',
+                                        'name': str(self.peer_id),
                                         'published':True,
                                         'hasVideo':True,
                                         'hasAudio': True,
