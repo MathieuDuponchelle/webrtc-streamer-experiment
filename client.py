@@ -81,7 +81,10 @@ class WebRTCClient:
                                         'hasAudio': True,
                                         'record': False,
                                         'status': 'PENDING',
-                                        'sdp': offer.sdp.as_text()
+                                        'sdp': offer.sdp.as_text(),
+                                        'bitrate':0,
+                                        'minBitrate':0,
+                                        'maxBitrate':0,
                                     }
                                 ]))
 
