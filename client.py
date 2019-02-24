@@ -1,10 +1,8 @@
 #!/bin/env python3
 
-import random
 import ssl
 import websockets
 import asyncio
-import os
 import sys
 import json
 import argparse
@@ -27,13 +25,12 @@ webrtcbin name=sendrecv bundle-policy=max-bundle
 '''
 
 class WebRTCClient:
-    def __init__(self, id_, peer_id, server, disable_ssl):
-        self.id_ = id_
+    def __init__(self, stream_name, server, disable_ssl):
         self.media_session_id = uuid.uuid4()
         self.conn = None
         self.pipe = None
         self.webrtc = None
-        self.peer_id = peer_id
+        self.stream_name = stream_name
         self.disable_ssl = disable_ssl
         self.state = 'init'
         self.server = server or 'wss://192.168.1.1:8443'
@@ -75,7 +72,7 @@ class WebRTCClient:
                                 [
                                     {
                                         'mediaSessionId': str(self.media_session_id),
-                                        'name': str(self.peer_id),
+                                        'name': str(self.stream_name),
                                         'published':True,
                                         'hasVideo':True,
                                         'hasAudio': True,
@@ -215,12 +212,11 @@ if __name__=='__main__':
     if not check_plugins():
         sys.exit(1)
     parser = argparse.ArgumentParser()
-    parser.add_argument('peerid', help='String ID of the peer to connect to')
+    parser.add_argument('stream_name', help='Stream name to connect to')
     parser.add_argument('--server', help='Signalling server to connect to, eg "wss://127.0.0.1:8443"')
     parser.add_argument('--disable-ssl', action='store_true', help='Disable SSL validation')
     args = parser.parse_args()
-    our_id = random.randrange(10, 10000)
-    c = WebRTCClient(our_id, args.peerid, args.server, args.disable_ssl)
+    c = WebRTCClient(args.stream_name, args.server, args.disable_ssl)
     asyncio.get_event_loop().run_until_complete(c.connect())
     res = asyncio.get_event_loop().run_until_complete(c.loop())
     sys.exit(res)
