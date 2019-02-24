@@ -147,9 +147,17 @@ class WebRTCClient:
         msg = json.loads(message)
         if msg['message'] == 'setRemoteSDP':
             sdp = msg['data'][1]
-            print ('Received answer:\n%s' % sdp)
             res, sdpmsg = GstSdp.SDPMessage.new()
             GstSdp.sdp_message_parse_buffer(bytes(sdp.encode()), sdpmsg)
+            # Flashphoner returns a sdp that doesn't have the "setup" attribute
+            # Which Gstreamer rejects.
+            # So we add it back
+            for i in [0, 1]:
+                sdpmedia = sdpmsg.get_media(i)
+                if not sdpmedia.get_attribute_val("setup") in ["actpass", "active", "passive"]:
+                    print("Setting 'setup' attribute for media %d" % i)
+                    sdpmedia.add_attribute("setup", "active")
+
             answer = GstWebRTC.WebRTCSessionDescription.new(GstWebRTC.WebRTCSDPType.ANSWER, sdpmsg)
             promise = Gst.Promise.new()
             self.webrtc.emit('set-remote-description', answer, promise)
