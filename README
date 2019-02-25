@@ -1,0 +1,5 @@
+
+
+You need to set the env OPENSSL_CONF="" due to a bug.
+See
+https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad/issues/811#note_117235
