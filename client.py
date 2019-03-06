@@ -162,6 +162,19 @@ class WebRTCClient:
     async def pong(self):
         await self.send_message('pong', [None])
 
+    def print_status(self):
+        if self.webrtc:
+            p = self.webrtc.get_property("connection-state")
+            print(str(p))
+            p = self.webrtc.get_property("signaling-state")
+            print(str(p))
+            p = self.webrtc.get_property("ice-gathering-state")
+            print(str(p))
+            p = self.webrtc.get_property("ice-connection-state")
+            print(str(p))
+        else:
+            print("WebRTC not initialized")
+
     def publish(self):
         if self.state == 'publish':
             return
@@ -188,6 +201,7 @@ class WebRTCClient:
             elif jsonmsg['message'] == 'getVersion':
                 pass
             elif jsonmsg['message'] == 'ping':
+                self.print_status()
                 await self.pong()
                 self.publish()
             elif jsonmsg['message'] == 'setRemoteSDP':
