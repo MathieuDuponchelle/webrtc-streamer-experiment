@@ -24,6 +24,8 @@ webrtcbin name=sendrecv bundle-policy=max-bundle
  queue ! application/x-rtp,media=audio,encoding-name=OPUS,payload=96 ! sendrecv.
 '''
 
+N_MEDIA = 2
+
 class WebRTCClient:
     def __init__(self, stream_name, server, disable_ssl):
         self.media_session_id = uuid.uuid4()
@@ -133,6 +135,9 @@ class WebRTCClient:
         print("start pipeline")
         self.pipe = Gst.parse_launch(PIPELINE_DESC)
         self.webrtc = self.pipe.get_by_name('sendrecv')
+        for i in range (N_MEDIA):
+            trans = self.webrtc.emit('get-transceiver', i)
+            trans.set_direction(GstWebRTC.WebRTCRTPTransceiverDirection.SENDONLY)
         self.webrtc.connect('on-negotiation-needed', self.on_negotiation_needed)
         self.webrtc.connect('pad-added', self.on_incoming_stream)
         self.pipe.set_state(Gst.State.PLAYING)
@@ -148,7 +153,7 @@ class WebRTCClient:
             # Flashphoner returns a sdp that doesn't have the "setup" attribute
             # Which Gstreamer rejects.
             # So we add it back
-            for i in [0, 1]:
+            for i in range (N_MEDIA):
                 sdpmedia = sdpmsg.get_media(i)
                 if not sdpmedia.get_attribute_val("setup") in ["actpass", "active", "passive"]:
                     print("Setting 'setup' attribute for media %d" % i)
@@ -158,6 +163,11 @@ class WebRTCClient:
             promise = Gst.Promise.new()
             self.webrtc.emit('set-remote-description', answer, promise)
             promise.interrupt()
+
+            for i in range (N_MEDIA):
+                sdpmedia = sdpmsg.get_media(i)
+                candidate = sdpmedia.get_attribute_val_n('candidate', 0)
+                self.webrtc.emit('add-ice-candidate', i, 'a=candidate:' + candidate)
 
     async def pong(self):
         await self.send_message('pong', [None])
